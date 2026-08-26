@@ -1,0 +1,57 @@
+name: Bewertungsstand eintragen
+
+on:
+  workflow_dispatch:
+    inputs:
+      company_slug:
+        description: "Unternehmen"
+        required: true
+        type: choice
+        options:
+          - backer-steinbeck
+          - beauty-hair
+          - eiscafe-fantasia
+          - haaratelier-fischer
+      review_count:
+        description: "Aktuelle Anzahl Google-Bewertungen"
+        required: true
+        type: string
+      date:
+        description: "Optional YYYY-MM-DD. Leer = heute."
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  log-review:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Repository laden
+        uses: actions/checkout@v4
+
+      - name: Python einrichten
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Bewertungsstand speichern
+        env:
+          COMPANY_SLUG: ${{ inputs.company_slug }}
+          REVIEW_COUNT: ${{ inputs.review_count }}
+          SNAPSHOT_DATE: ${{ inputs.date }}
+        run: python scripts/log_review.py
+
+      - name: Änderungen speichern
+        run: |
+          git config user.name "ReviewSpot Automation"
+          git config user.email "actions@users.noreply.github.com"
+          git add data/ REVIEW_DASHBOARD.md .github/workflows/log-review.yml
+          if git diff --cached --quiet; then
+            echo "Keine Änderungen vorhanden."
+          else
+            git commit -m "Log review count for ${{ inputs.company_slug }}"
+            git push
+          fi
