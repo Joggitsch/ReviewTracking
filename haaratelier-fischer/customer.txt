@@ -1,0 +1,7 @@
+Unternehmen: HAARATELIER FISCHER
+Place ID: ChIJLScxOxgHl0cRDq1IZLsuo4s
+Slug: haaratelier-fischer
+Modus: direct
+Tracking-Link: https://reviewspot-de.github.io/ReviewTracking/haaratelier-fischer/
+Direkter Review-Link: https://search.google.com/local/writereview?placeid=ChIJLScxOxgHl0cRDq1IZLsuo4s
+Google-Maps-Link: https://www.google.com/maps/search/?api=1&query=HAARATELIER%20FISCHER&query_place_id=ChIJLScxOxgHl0cRDq1IZLsuo4s
