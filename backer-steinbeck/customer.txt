@@ -1,0 +1,7 @@
+Unternehmen: Bäcker Steinbeck
+Place ID: ChIJWTu1PBgHl0cR3aFZ9hTwE7s
+Slug: backer-steinbeck
+Modus: direct
+Tracking-Link: https://reviewspot-de.github.io/ReviewTracking/backer-steinbeck/
+Direkter Review-Link: https://search.google.com/local/writereview?placeid=ChIJWTu1PBgHl0cR3aFZ9hTwE7s
+Google-Maps-Link: https://www.google.com/maps/search/?api=1&query=B%C3%A4cker%20Steinbeck&query_place_id=ChIJWTu1PBgHl0cR3aFZ9hTwE7s
