@@ -1,0 +1,61 @@
+name: ReviewSpot Kunde anlegen oder aktualisieren
+
+on:
+  workflow_dispatch:
+    inputs:
+      company_name:
+        description: "Unternehmensname, z. B. Beauty Hair"
+        required: true
+        type: string
+      place_id:
+        description: "Google Place ID, z. B. ChIJ..."
+        required: true
+        type: string
+      slug:
+        description: "URL-Name, z. B. beauty-hair. Leer = automatisch."
+        required: false
+        type: string
+      target_mode:
+        description: "Ziel nach dem Tracking"
+        required: true
+        default: direct
+        type: choice
+        options:
+          - direct
+          - maps
+
+permissions:
+  contents: write
+
+jobs:
+  create-or-update:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Repository laden
+        uses: actions/checkout@v4
+
+      - name: Python einrichten
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Kundenseite erzeugen oder aktualisieren
+        env:
+          COMPANY_NAME: ${{ inputs.company_name }}
+          PLACE_ID: ${{ inputs.place_id }}
+          SLUG: ${{ inputs.slug }}
+          TARGET_MODE: ${{ inputs.target_mode }}
+        run: python scripts/create_customer.py
+
+      - name: Änderungen speichern
+        run: |
+          git config user.name "ReviewSpot Automation"
+          git config user.email "actions@users.noreply.github.com"
+          git add .
+          if git diff --cached --quiet; then
+            echo "Keine Änderungen vorhanden."
+          else
+            git commit -m "Create/update review page for ${{ inputs.company_name }}"
+            git push
+          fi
