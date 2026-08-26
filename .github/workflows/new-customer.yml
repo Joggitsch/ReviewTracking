@@ -12,7 +12,7 @@ on:
         required: true
         type: string
       slug:
-        description: "URL-Name, z. B. beauty-hair. Leer = automatisch."
+        description: "Optional. Leer = automatisch aus Unternehmensname."
         required: false
         type: string
       target_mode:
@@ -23,6 +23,10 @@ on:
         options:
           - direct
           - maps
+      initial_reviews:
+        description: "Optional: aktueller Google-Bewertungsstand beim Anlegen"
+        required: false
+        type: string
 
 permissions:
   contents: write
@@ -46,6 +50,7 @@ jobs:
           PLACE_ID: ${{ inputs.place_id }}
           SLUG: ${{ inputs.slug }}
           TARGET_MODE: ${{ inputs.target_mode }}
+          INITIAL_REVIEWS: ${{ inputs.initial_reviews }}
         run: python scripts/create_customer.py
 
       - name: Änderungen speichern
