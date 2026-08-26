@@ -1,0 +1,38 @@
+[
+  {
+    "company_name": "Bäcker Steinbeck",
+    "slug": "backer-steinbeck",
+    "place_id": "ChIJWTu1PBgHl0cR3aFZ9hTwE7s",
+    "target_mode": "direct",
+    "tracking_url": "https://reviewspot-de.github.io/ReviewTracking/backer-steinbeck/",
+    "direct_review_url": "https://search.google.com/local/writereview?placeid=ChIJWTu1PBgHl0cR3aFZ9hTwE7s",
+    "maps_url": "https://www.google.com/maps/search/?api=1&query=B%C3%A4cker%20Steinbeck&query_place_id=ChIJWTu1PBgHl0cR3aFZ9hTwE7s"
+  },
+  {
+    "company_name": "Beauty Hair",
+    "slug": "beauty-hair",
+    "place_id": "ChIJt4_gOfQHl0cRyz0L5DGB5q8",
+    "target_mode": "direct",
+    "tracking_url": "https://reviewspot-de.github.io/ReviewTracking/beauty-hair/",
+    "direct_review_url": "https://search.google.com/local/writereview?placeid=ChIJt4_gOfQHl0cRyz0L5DGB5q8",
+    "maps_url": "https://www.google.com/maps/search/?api=1&query=Beauty%20Hair&query_place_id=ChIJt4_gOfQHl0cRyz0L5DGB5q8"
+  },
+  {
+    "company_name": "Eiscafé Fantasia",
+    "slug": "eiscafe-fantasia",
+    "place_id": "ChIJ84oSNBgHl0cRRiOZAWLYWsg",
+    "target_mode": "direct",
+    "tracking_url": "https://reviewspot-de.github.io/ReviewTracking/eiscafe-fantasia/",
+    "direct_review_url": "https://search.google.com/local/writereview?placeid=ChIJ84oSNBgHl0cRRiOZAWLYWsg",
+    "maps_url": "https://www.google.com/maps/search/?api=1&query=Eiscaf%C3%A9%20Fantasia&query_place_id=ChIJ84oSNBgHl0cRRiOZAWLYWsg"
+  },
+  {
+    "company_name": "HAARATELIER FISCHER",
+    "slug": "haaratelier-fischer",
+    "place_id": "ChIJLScxOxgHl0cRDq1IZLsuo4s",
+    "target_mode": "direct",
+    "tracking_url": "https://reviewspot-de.github.io/ReviewTracking/haaratelier-fischer/",
+    "direct_review_url": "https://search.google.com/local/writereview?placeid=ChIJLScxOxgHl0cRDq1IZLsuo4s",
+    "maps_url": "https://www.google.com/maps/search/?api=1&query=HAARATELIER%20FISCHER&query_place_id=ChIJLScxOxgHl0cRDq1IZLsuo4s"
+  }
+]
