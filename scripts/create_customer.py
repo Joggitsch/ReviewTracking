@@ -1,15 +1,24 @@
 from __future__ import annotations
 
+import csv
 import html
+import json
 import os
 import re
+import subprocess
 import sys
 import unicodedata
+from datetime import date
 from pathlib import Path
 from urllib.parse import quote
 
 BASE_URL = "https://reviewspot-de.github.io/ReviewTracking"
 GOATCOUNTER_URL = "https://reviewspot.goatcounter.com/count"
+
+DATA_DIR = Path("data")
+CUSTOMERS_FILE = DATA_DIR / "customers.json"
+HISTORY_FILE = DATA_DIR / "review_history.csv"
+REVIEW_WORKFLOW = Path(".github/workflows/log-review.yml")
 
 
 def slugify(value: str) -> str:
@@ -20,10 +29,107 @@ def slugify(value: str) -> str:
     return value.strip("-")
 
 
+def load_customers() -> list[dict]:
+    if not CUSTOMERS_FILE.exists():
+        return []
+    return json.loads(CUSTOMERS_FILE.read_text(encoding="utf-8"))
+
+
+def save_customers(customers: list[dict]) -> None:
+    DATA_DIR.mkdir(exist_ok=True)
+    customers = sorted(customers, key=lambda c: c["company_name"].casefold())
+    CUSTOMERS_FILE.write_text(
+        json.dumps(customers, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+
+
+def rebuild_review_workflow(customers: list[dict]) -> None:
+    slugs = [c["slug"] for c in sorted(customers, key=lambda c: c["company_name"].casefold())]
+    options = "\n".join(f"          - {slug}" for slug in slugs)
+
+    content = """name: Bewertungsstand eintragen
+
+on:
+  workflow_dispatch:
+    inputs:
+      company_slug:
+        description: "Unternehmen"
+        required: true
+        type: choice
+        options:
+__OPTIONS__
+      review_count:
+        description: "Aktuelle Anzahl Google-Bewertungen"
+        required: true
+        type: string
+      date:
+        description: "Optional YYYY-MM-DD. Leer = heute."
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  log-review:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Repository laden
+        uses: actions/checkout@v4
+
+      - name: Python einrichten
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Bewertungsstand speichern
+        env:
+          COMPANY_SLUG: ${{ inputs.company_slug }}
+          REVIEW_COUNT: ${{ inputs.review_count }}
+          SNAPSHOT_DATE: ${{ inputs.date }}
+        run: python scripts/log_review.py
+
+      - name: Änderungen speichern
+        run: |
+          git config user.name "ReviewSpot Automation"
+          git config user.email "actions@users.noreply.github.com"
+          git add data/ REVIEW_DASHBOARD.md .github/workflows/log-review.yml
+          if git diff --cached --quiet; then
+            echo "Keine Änderungen vorhanden."
+          else
+            git commit -m "Log review count for ${{ inputs.company_slug }}"
+            git push
+          fi
+""".replace("__OPTIONS__", options)
+
+    REVIEW_WORKFLOW.write_text(content, encoding="utf-8")
+
+
+def append_initial_review(slug: str, review_text: str) -> None:
+    review_text = review_text.strip()
+    if not review_text:
+        return
+
+    if not review_text.isdigit():
+        sys.exit("Fehler: initial_reviews muss eine ganze Zahl sein.")
+
+    DATA_DIR.mkdir(exist_ok=True)
+    new_file = not HISTORY_FILE.exists() or HISTORY_FILE.stat().st_size == 0
+
+    with HISTORY_FILE.open("a", encoding="utf-8", newline="") as f:
+        writer = csv.writer(f)
+        if new_file:
+            writer.writerow(["date", "company_slug", "review_count"])
+        writer.writerow([date.today().isoformat(), slug, int(review_text)])
+
+
 company_name = os.environ.get("COMPANY_NAME", "").strip()
 place_id = os.environ.get("PLACE_ID", "").strip()
 custom_slug = os.environ.get("SLUG", "").strip()
 target_mode = os.environ.get("TARGET_MODE", "direct").strip().lower()
+initial_reviews = os.environ.get("INITIAL_REVIEWS", "").strip()
 
 if not company_name:
     sys.exit("Fehler: Unternehmensname fehlt.")
@@ -83,9 +189,7 @@ page = f"""<!doctype html>
       --gold:#f4c542;
       --line:#2a2a2f;
     }}
-
     * {{ box-sizing:border-box; }}
-
     html, body {{
       margin:0;
       width:100%;
@@ -94,19 +198,13 @@ page = f"""<!doctype html>
       color:var(--text);
       font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;
     }}
-
     body {{
       min-height:100vh;
       display:grid;
       place-items:center;
       padding:24px;
     }}
-
-    .wrap {{
-      width:min(100%,430px);
-      text-align:center;
-    }}
-
+    .wrap {{ width:min(100%,430px); text-align:center; }}
     .eyebrow {{
       font-size:13px;
       letter-spacing:.16em;
@@ -114,7 +212,6 @@ page = f"""<!doctype html>
       color:var(--muted);
       margin-bottom:14px;
     }}
-
     h1 {{
       margin:0;
       font-size:34px;
@@ -122,7 +219,6 @@ page = f"""<!doctype html>
       font-weight:800;
       letter-spacing:-.03em;
     }}
-
     .stars {{
       margin:18px 0 12px;
       font-size:25px;
@@ -130,7 +226,6 @@ page = f"""<!doctype html>
       color:var(--gold);
       white-space:nowrap;
     }}
-
     .message {{
       margin:0 auto;
       max-width:320px;
@@ -138,7 +233,6 @@ page = f"""<!doctype html>
       font-size:16px;
       line-height:1.5;
     }}
-
     .loader {{
       width:180px;
       height:4px;
@@ -147,7 +241,6 @@ page = f"""<!doctype html>
       overflow:hidden;
       margin:24px auto 0;
     }}
-
     .loader span {{
       display:block;
       width:40%;
@@ -157,43 +250,29 @@ page = f"""<!doctype html>
       animation:load .65s ease-out forwards;
       transform-origin:left;
     }}
-
     .fallback {{
       margin-top:22px;
       font-size:13px;
       color:#77777c;
     }}
-
     .fallback a {{
       color:#b8b8bc;
       text-decoration:none;
       border-bottom:1px solid #44444a;
     }}
-
     @keyframes load {{
       from {{ transform:scaleX(.05); opacity:.5; }}
       to {{ transform:scaleX(2.5); opacity:1; }}
     }}
-
     @media (prefers-reduced-motion: reduce) {{
-      .loader span {{
-        animation:none;
-        width:100%;
-      }}
+      .loader span {{ animation:none; width:100%; }}
     }}
   </style>
 
   <script>
-    // ----------------------------------------------------------
-    // REVIEWSPOT ZIELMODUS
-    // "direct" = direkt ins Google-Bewertungsfenster (STANDARD)
-    // "maps"   = Google-Maps-Unternehmensseite (BACKUP)
-    // ----------------------------------------------------------
     const targetMode = {target_mode!r};
-
     const directReviewUrl = {direct_review_url!r};
     const mapsUrl = {maps_url!r};
-
     const targetUrl = targetMode === "maps" ? mapsUrl : directReviewUrl;
 
     window.addEventListener("load", function () {{
@@ -212,15 +291,9 @@ page = f"""<!doctype html>
   <main class="wrap" aria-live="polite">
     <div class="eyebrow">Google Bewertung</div>
     <h1>{company_safe}</h1>
-
     <div class="stars" aria-label="5 Sterne">★★★★★</div>
-
     <p class="message">Bewertungsfenster wird geöffnet …</p>
-
-    <div class="loader" aria-hidden="true">
-      <span></span>
-    </div>
-
+    <div class="loader" aria-hidden="true"><span></span></div>
     <p class="fallback">
       Falls nichts passiert,
       <a href="{active_url}">hier öffnen</a>.
@@ -232,8 +305,7 @@ page = f"""<!doctype html>
 
 index_file.write_text(page, encoding="utf-8")
 
-metadata = customer_dir / "customer.txt"
-metadata.write_text(
+(customer_dir / "customer.txt").write_text(
     f"Unternehmen: {company_name}\n"
     f"Place ID: {place_id}\n"
     f"Slug: {slug}\n"
@@ -243,6 +315,22 @@ metadata.write_text(
     f"Google-Maps-Link: {maps_url}\n",
     encoding="utf-8",
 )
+
+customers = [c for c in load_customers() if c.get("slug") != slug]
+customers.append({
+    "company_name": company_name,
+    "slug": slug,
+    "place_id": place_id,
+    "target_mode": target_mode,
+    "tracking_url": tracking_url,
+    "direct_review_url": direct_review_url,
+    "maps_url": maps_url,
+})
+save_customers(customers)
+rebuild_review_workflow(customers)
+append_initial_review(slug, initial_reviews)
+
+subprocess.check_call(["python", "scripts/build_review_dashboard.py"])
 
 summary = os.environ.get("GITHUB_STEP_SUMMARY")
 if summary:
@@ -256,8 +344,3 @@ if summary:
         encoding="utf-8",
     )
 
-print(f"Erstellt/aktualisiert: {index_file}")
-print(f"Modus: {target_mode}")
-print(f"Tracking-Link: {tracking_url}")
-print(f"Direkter Review-Link: {direct_review_url}")
-print(f"Google-Maps-Link: {maps_url}")
