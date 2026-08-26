@@ -1,2 +1,0 @@
-# ReviewTracking
-Tracking Google Reviews
