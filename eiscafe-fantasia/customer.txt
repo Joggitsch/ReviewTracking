@@ -1,0 +1,7 @@
+Unternehmen: Eiscafé Fantasia
+Place ID: ChIJ84oSNBgHl0cRRiOZAWLYWsg
+Slug: eiscafe-fantasia
+Modus: direct
+Tracking-Link: https://reviewspot-de.github.io/ReviewTracking/eiscafe-fantasia/
+Direkter Review-Link: https://search.google.com/local/writereview?placeid=ChIJ84oSNBgHl0cRRiOZAWLYWsg
+Google-Maps-Link: https://www.google.com/maps/search/?api=1&query=Eiscaf%C3%A9%20Fantasia&query_place_id=ChIJ84oSNBgHl0cRRiOZAWLYWsg
